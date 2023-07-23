@@ -67,7 +67,7 @@ async function runCLI() {
     relay.on("connect", (player) => {
       if (!joined) {
         console.log(
-          `\n"New connection" ${player.connection.address}${chalk.green(
+          `\nNew connection ${player.connection.address}${chalk.green(
             "\nDetected user joined!\n"
           )}\n ${lightBlue(
             "Navigate to this website below to enter voice chat!"
@@ -77,10 +77,11 @@ async function runCLI() {
             "KEEP THIS WINDOW OPEN AT ALL TIMES DURING VOICE CHAT"
           )}`
         );
+      } else {
+        console.log("\nNew connection", player.connection.address);
       }
 
       joined = true;
-      console.log("\nNew connection", player.connection.address);
 
       // // Server is sending a message to the client.
       player.on("clientbound", ({ name, params }) => {
@@ -113,9 +114,6 @@ async function runCLI() {
               previousPosition.z !== roundedZ ||
               previousYaw !== roundedYaw
             ) {
-              console.log(
-                `${roundedX}, ${roundedY}, ${roundedZ}, ${roundedYaw}, ${playerName}`
-              );
               ws.send(
                 JSON.stringify({
                   x: roundedX,
