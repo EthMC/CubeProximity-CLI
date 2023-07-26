@@ -31,6 +31,7 @@ const validVersions = [
   "1.20.10",
 ];
 let playerName;
+let serverName;
 let MCversion;
 let joined = false;
 
@@ -39,8 +40,8 @@ import { Relay } from "bedrock-protocol";
 import WebSocket from "ws";
 import { createSpinner } from "nanospinner";
 
-// const ws = new WebSocket("ws://localhost:8082");
-const ws = new WebSocket("wss://ws-jsju.onrender.com:443");
+const ws = new WebSocket("ws://localhost:8082");
+// const ws = new WebSocket("wss://ws-jsju.onrender.com:443");
 
 async function runCLI() {
   async function startServer() {
@@ -85,6 +86,34 @@ async function runCLI() {
 
       // // Server is sending a message to the client.
       player.on("clientbound", ({ name, params }) => {
+        if (name === "set_score") {
+          if (params.entries && params.entries.length > 0) {
+            if (!(params.entries[0].custom_name === undefined)) {
+              if (params.entries[0].custom_name.includes("User:")) {
+                function removeMinecraftFormatting(text) {
+                  // Regular expression to match Minecraft formatting codes
+                  const regex = /§[0-9A-FK-ORa-fk-or]/g;
+
+                  // Replace all occurrences of the formatting codes with an empty string
+                  const cleanText = text.replace(regex, "");
+
+                  return cleanText;
+                }
+                const cleanText = removeMinecraftFormatting(
+                  params.entries[0].custom_name
+                );
+                playerName = cleanText.replace(/^User:\s*/, "");
+              }
+
+              if (params.entries[0].custom_name.includes("§r§8")) {
+                const regexPattern = /\((.*?)\)/;
+                const matchResult =
+                  params.entries[0].custom_name.match(regexPattern);
+                serverName = matchResult ? matchResult[1] : null;
+              }
+            }
+          }
+        }
         if (name === "text") {
           const { message } = params;
 
@@ -98,7 +127,7 @@ async function runCLI() {
       player.on("serverbound", ({ name, params }) => {
         if (GameStarted) {
           if (name === "player_auth_input") {
-            const { position, yaw } = params;
+            const { position, yaw, pitch } = params;
             const { x, y, z } = position;
             const roundedX = Math.round(x * 10) / 10;
             const roundedY = Math.round(y * 10) / 10;
@@ -114,15 +143,21 @@ async function runCLI() {
               previousPosition.z !== roundedZ ||
               previousYaw !== roundedYaw
             ) {
-              ws.send(
-                JSON.stringify({
-                  x: roundedX,
-                  y: roundedY,
-                  z: roundedZ,
-                  yaw: roundedYaw,
-                  user: playerName,
-                })
-              );
+              if (
+                typeof playerName === "string" &&
+                typeof serverName === "string"
+              ) {
+                ws.send(
+                  JSON.stringify({
+                    x: roundedX,
+                    y: roundedY,
+                    z: roundedZ,
+                    yaw: roundedYaw,
+                    user: playerName,
+                    server: serverName,
+                  })
+                );
+              }
               previousPosition = roundedPosition;
               previousYaw = roundedYaw;
             }
@@ -160,19 +195,6 @@ async function runCLI() {
     await sleep2();
   }
 
-  async function askName() {
-    const answers = await inquirer.prompt({
-      name: "player_name",
-      type: "input",
-      message: `\n\n${cubeYellow("Enter your in-game username!")}`,
-      default() {
-        return "Player";
-      },
-    });
-
-    playerName = answers.player_name;
-  }
-
   async function askVersion() {
     const answers = await inquirer.prompt({
       name: "version",
@@ -204,8 +226,6 @@ async function runCLI() {
       name: "checkPrompt",
       type: "input",
       message: `\n\n\n\nIs this correct?\n  ${cubeYellow(
-        "Player Name:"
-      )} ${playerName}\n  ${cubeYellow(
         "MC Version:"
       )} ${MCversion}\n\n  ${chalk.green("(Y")}/${chalk.red("N)")}`,
       default() {
@@ -214,7 +234,6 @@ async function runCLI() {
     });
 
     if ((answers.checkPrompt === "N") | (answers.checkPrompt === "n")) {
-      await askName();
       await askVersion();
     } else {
       console.log("\n\n");
@@ -223,7 +242,6 @@ async function runCLI() {
   }
 
   await welcome();
-  await askName();
   await askVersion();
 }
 
