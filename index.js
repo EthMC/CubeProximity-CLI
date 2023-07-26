@@ -40,8 +40,8 @@ import { Relay } from "bedrock-protocol";
 import WebSocket from "ws";
 import { createSpinner } from "nanospinner";
 
-const ws = new WebSocket("ws://localhost:8082");
-// const ws = new WebSocket("wss://ws-jsju.onrender.com:443");
+// const ws = new WebSocket("ws://localhost:8082");
+const ws = new WebSocket("wss://ws-jsju.onrender.com:443");
 
 async function runCLI() {
   async function startServer() {
