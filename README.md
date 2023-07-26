@@ -4,7 +4,8 @@ This project was built as a smiple way for proximity chat inside Minecraft Bedro
 <br>
 
 ## How to use
-Download the executable for the opperating system you are using. Then run it, filling out the prompts on screen. It's as simple as that!
+To use this app, please first install [Node.js (LTS)](https://nodejs.org/en)<br>
+Next, download the release zip for the opperating system you are using. Then run the "start-app", filling out the prompts on screen. It's as simple as that!
 >We support both Windows & MacOS
 <br>
 
